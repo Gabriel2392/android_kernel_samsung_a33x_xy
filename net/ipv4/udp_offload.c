@@ -534,6 +534,11 @@ struct sk_buff *udp_gro_receive(struct list_head *head, struct sk_buff *skb,
 			sk2 = NULL;
 	}
 
+	/* We can do L4 aggregation only if the packet can't land in a tunnel
+	 * otherwise we could corrupt the inner stream. Detecting such packets
+	 * cannot be foolproof and the aggregation might still happen in some
+	 * cases. Such packets should be caught in udp_unexpected_gso later.
+	 */
 	NAPI_GRO_CB(skb)->is_flist = 0;
 	if (sk2 && (skb->dev->features & NETIF_F_GRO_FRAGLIST))
 		NAPI_GRO_CB(skb)->is_flist = sk ? !udp_sk(sk)->gro_enabled: 1;
