@@ -364,6 +364,9 @@ DECLARE_HOOK(android_vh_skip_swapcache,
 	TP_ARGS(entry, skip));
 /* macro versions of hooks are no longer required */
 
+DECLARE_HOOK(android_vh_tune_fault_around_bytes,
+	TP_PROTO(unsigned long *fault_around_bytes),
+	TP_ARGS(fault_around_bytes));
 #endif /* _TRACE_HOOK_MM_H */
 
 /* This part must be outside protection */
