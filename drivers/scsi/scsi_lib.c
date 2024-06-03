@@ -1615,7 +1615,7 @@ static void scsi_mq_done(struct scsi_cmnd *cmd)
 		pr_info("%s TEST_UNIT_READY +\n", __func__);
 	}
 #endif
-	if (unlikely(blk_should_fake_timeout(cmd->request->q)))
+	if (unlikely(blk_should_fake_timeout(cmd->request->q))) {
 #ifdef CONFIG_SEC_FACTORY
 		if (cmd && cmd->device &&
 			cmd->device->removable && cmd->cmnd &&
