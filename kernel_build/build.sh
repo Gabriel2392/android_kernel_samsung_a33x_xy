@@ -1,6 +1,6 @@
 #!/bin/bash
 
-XY_VERSION="R3.1"
+XY_VERSION="RECOVERY"
 ZFS_VERSION="zfs-2.2.4"
 
 set -e
