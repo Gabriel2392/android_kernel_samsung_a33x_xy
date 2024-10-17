@@ -664,24 +664,6 @@ static unsigned int cpufreq_parse_policy(char *str_governor)
 	return CPUFREQ_POLICY_UNKNOWN;
 }
 
-/**
- * cpufreq_parse_governor - parse a governor string only for has_target()
- * @str_governor: Governor name.
- */
-static struct cpufreq_governor *cpufreq_parse_governor(char *str_governor)
-{
-	struct cpufreq_governor *t;
-
-	t = get_governor(str_governor);
-	if (t)
-		return t;
-
-	if (request_module("cpufreq_%s", str_governor))
-		return NULL;
-
-	return get_governor(str_governor);
-}
-
 /*
  * cpufreq_per_cpu_attr_read() / show_##file_name() -
  * print out cpufreq information
@@ -787,35 +769,7 @@ static ssize_t show_scaling_governor(struct cpufreq_policy *policy, char *buf)
 static ssize_t store_scaling_governor(struct cpufreq_policy *policy,
 					const char *buf, size_t count)
 {
-	char str_governor[16];
-	int ret;
-
-	ret = sscanf(buf, "%15s", str_governor);
-	if (ret != 1)
-		return -EINVAL;
-
-	if (cpufreq_driver->setpolicy) {
-		unsigned int new_pol;
-
-		new_pol = cpufreq_parse_policy(str_governor);
-		if (!new_pol)
-			return -EINVAL;
-
-		ret = cpufreq_set_policy(policy, NULL, new_pol);
-	} else {
-		struct cpufreq_governor *new_gov;
-
-		new_gov = cpufreq_parse_governor(str_governor);
-		if (!new_gov)
-			return -EINVAL;
-
-		ret = cpufreq_set_policy(policy, new_gov,
-					 CPUFREQ_POLICY_UNKNOWN);
-
-		module_put(new_gov->owner);
-	}
-
-	return ret ? ret : count;
+	return count;
 }
 
 /*
