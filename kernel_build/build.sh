@@ -15,8 +15,6 @@ if [ "$(uname -m)" != "x86_64" ]; then
   exit 1
 fi
 
-export PATH="$(pwd)/kernel_build/bin:$PATH"
-
 # Configs
 OUTDIR="$(pwd)/out"
 MODULES_OUTDIR="$(pwd)/modules_out"
