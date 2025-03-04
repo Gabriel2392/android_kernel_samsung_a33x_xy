@@ -23,6 +23,11 @@
 #define BIO_MAX_PAGES		256
 #define BIO_MAX_BYTES		(BIO_MAX_PAGES * PAGE_SIZE)
 
+static inline unsigned int bio_max_segs(unsigned int nr_segs)
+{
+        return min(nr_segs, (unsigned int)BIO_MAX_PAGES);
+}
+
 #define bio_prio(bio)			(bio)->bi_ioprio
 #define bio_set_prio(bio, prio)		((bio)->bi_ioprio = prio)
 
