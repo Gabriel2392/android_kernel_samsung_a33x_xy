@@ -186,6 +186,24 @@ docopy:
 	return src;
 }
 
+/*
+ * Get the exact inputsize with zero_padding feature.
+ *  - For LZ4, it should work if zero_padding feature is on (5.3+);
+ *  - For MicroLZMA, it'd be enabled all the time.
+ */
+int z_erofs_fixup_insize(struct z_erofs_decompress_req *rq, const char *padbuf,
+			 unsigned int padbufsize)
+{
+	const char *padend;
+
+	padend = memchr_inv(padbuf, 0, padbufsize);
+	if (!padend)
+		return -EFSCORRUPTED;
+	rq->inputsize -= padend - padbuf;
+	rq->pageofs_in += padend - padbuf;
+	return 0;
+}
+
 static int z_erofs_lz4_decompress_mem(struct z_erofs_decompress_req *rq,
 				      u8 *out)
 {
@@ -346,6 +364,12 @@ static struct z_erofs_decompressor decompressors[] = {
 		.decompress = z_erofs_lz4_decompress,
 		.name = "lz4"
 	},
+#ifdef CONFIG_EROFS_FS_ZIP_ZSTD
+	[Z_EROFS_COMPRESSION_ZSTD] = {
+		.decompress = z_erofs_zstd_decompress,
+		.name = "zstd"
+	},
+#endif
 #ifdef CONFIG_EROFS_FS_ZIP_LZMA
 	[Z_EROFS_COMPRESSION_LZMA] = {
 		.decompress = z_erofs_lzma_decompress,

@@ -673,7 +673,8 @@ int z_erofs_map_blocks_iter(struct inode *inode,
 
 	if ((flags & EROFS_GET_BLOCKS_FIEMAP) ||
 	    ((flags & EROFS_GET_BLOCKS_READMORE) &&
-	     map->m_algorithmformat == Z_EROFS_COMPRESSION_LZMA &&
+	     (map->m_algorithmformat == Z_EROFS_COMPRESSION_LZMA ||
+	     map->m_algorithmformat == Z_EROFS_COMPRESSION_ZSTD) &&
 	     map->m_llen >= EROFS_BLKSIZ)) {
 		err = z_erofs_get_extent_decompressedlen(&m);
 		if (!err)
