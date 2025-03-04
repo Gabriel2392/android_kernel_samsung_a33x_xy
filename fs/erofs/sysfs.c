@@ -21,8 +21,7 @@ enum {
 struct erofs_attr {
 	struct attribute attr;
 	short attr_id;
-	int struct_type;
-	int offset;
+	int struct_type, offset;
 };
 
 #define EROFS_ATTR(_name, _mode, _id)					\
@@ -61,15 +60,21 @@ static struct attribute *erofs_attrs[] = {
 ATTRIBUTE_GROUPS(erofs);
 
 /* Features this copy of erofs supports */
-EROFS_ATTR_FEATURE(lz4_0padding);
+EROFS_ATTR_FEATURE(zero_padding);
 EROFS_ATTR_FEATURE(compr_cfgs);
 EROFS_ATTR_FEATURE(big_pcluster);
+EROFS_ATTR_FEATURE(chunked_file);
+EROFS_ATTR_FEATURE(device_table);
+EROFS_ATTR_FEATURE(compr_head2);
 EROFS_ATTR_FEATURE(sb_chksum);
 
 static struct attribute *erofs_feat_attrs[] = {
-	ATTR_LIST(lz4_0padding),
+	ATTR_LIST(zero_padding),
 	ATTR_LIST(compr_cfgs),
 	ATTR_LIST(big_pcluster),
+	ATTR_LIST(chunked_file),
+	ATTR_LIST(device_table),
+	ATTR_LIST(compr_head2),
 	ATTR_LIST(sb_chksum),
 	NULL,
 };
@@ -103,7 +108,6 @@ static ssize_t erofs_attr_show(struct kobject *kobj,
 			return 0;
 		return sysfs_emit(buf, "%d\n", *(bool *)ptr);
 	}
-
 	return 0;
 }
 
@@ -124,8 +128,8 @@ static ssize_t erofs_attr_store(struct kobject *kobj, struct attribute *attr,
 		ret = kstrtoul(skip_spaces(buf), 0, &t);
 		if (ret)
 			return ret;
-		if (t > UINT_MAX)
-			return -EINVAL;
+		if (t != (unsigned int)t)
+			return -ERANGE;
 		*(unsigned int *)ptr = t;
 		return len;
 	case attr_pointer_bool:
@@ -139,7 +143,6 @@ static ssize_t erofs_attr_store(struct kobject *kobj, struct attribute *attr,
 		*(bool *)ptr = !!t;
 		return len;
 	}
-
 	return 0;
 }
 
@@ -189,7 +192,6 @@ int erofs_register_sysfs(struct super_block *sb)
 				   "%s", sb->s_id);
 	if (err)
 		goto put_sb_kobj;
-
 	return 0;
 
 put_sb_kobj:
@@ -202,9 +204,11 @@ void erofs_unregister_sysfs(struct super_block *sb)
 {
 	struct erofs_sb_info *sbi = EROFS_SB(sb);
 
-	kobject_del(&sbi->s_kobj);
-	kobject_put(&sbi->s_kobj);
-	wait_for_completion(&sbi->s_kobj_unregister);
+	if (sbi->s_kobj.state_in_sysfs) {
+		kobject_del(&sbi->s_kobj);
+		kobject_put(&sbi->s_kobj);
+		wait_for_completion(&sbi->s_kobj_unregister);
+	}
 }
 
 int __init erofs_init_sysfs(void)
@@ -221,7 +225,6 @@ int __init erofs_init_sysfs(void)
 				   NULL, "features");
 	if (ret)
 		goto feat_err;
-
 	return ret;
 
 feat_err:
